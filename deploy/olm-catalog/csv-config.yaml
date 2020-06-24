@@ -1,0 +1,3 @@
+operator-path: deploy/operator.yaml
+role-paths:
+- deploy/role.yaml

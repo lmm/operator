@@ -1,0 +1,5 @@
+channels:
+- currentCSV: tigera-operator.v1.6.1
+  name: stable
+defaultChannel: stable
+packageName: laurence-operator
