@@ -1,0 +1,11 @@
+scorecard:
+  # Setting a global scorecard option
+  output: json
+  plugins:
+    - basic:
+        cr-manifest:
+          - "deploy/crds/operator_v1_installation_cr.yaml"
+    - olm:
+        cr-manifest:
+          - "deploy/crds/operator_v1_installation_cr.yaml"
+        csv-path: "deploy/olm-catalog/tigera-operator/1.6.1/tigera-operator.v1.6.1.clusterserviceversion.yaml"

@@ -43,6 +43,7 @@ yq write -i ${DEPLOY_CSV} spec.install.spec.deployments[0].spec.template.spec.co
 yq write -i ${DEPLOY_CSV} metadata.annotations.containerImage quay.io/tigera/operator:${VERSION}
 
 # Set the operator image creation timestamp annotation.
+docker pull quay.io/tigera/operator:${VERSION}
 TIMESTAMP=$(docker image inspect quay.io/tigera/operator:${VERSION} | jq .[0].Created)
 
 yq write -i ${DEPLOY_CSV} metadata.annotations.createdAt ${TIMESTAMP}
@@ -70,7 +71,12 @@ mkdir -p bundle/${SEMVER}
 # Copy over the CSV we've been building in deploy/olm-catalog/ to bundle/
 cp ${DEPLOY_CSV} bundle/${SEMVER}
 
-find ./deploy/crds/ -iname '*_crd.yaml' | xargs -I{} cp {} bundle/${SEMVER}
+# Copy over Calico crds and the operator installation and status crds to the
+# bundle
+cp ./deploy/crds/calico/*.yaml bundle/${SEMVER}
+cp ./deploy/crds/operator_v1_installation_crd.yaml bundle/${SEMVER}
+cp ./deploy/crds/operator_v1_tigerastatus_crd.yaml bundle/${SEMVER}
+
 cp deploy/olm-catalog/tigera-operator/tigera-operator.package.yaml bundle/
 mkdir -p build/_output
 cd bundle/ && zip -r ../build/_output/bundle-${VERSION}.zip . && cd -
