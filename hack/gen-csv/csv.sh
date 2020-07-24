@@ -68,25 +68,31 @@ mkdir -p ${DEPLOY_DIR}
 # Download operator and Calico manifests.
 source hack/gen-csv/get-manifests.sh
 
-CSV=${CSV_DIR}/tigera-operator.v${VERSION}.clusterserviceversion.yaml
+#CSV=${CSV_DIR}/tigera-operator.v${VERSION}.clusterserviceversion.yaml
+CSV=deploy/olm-catalog/tigera-operator/${VERSION}/tigera-operator.v${VERSION}.clusterserviceversion.yaml
+mkdir -p deploy/olm-catalog/tigera-operator/${VERSION}
 
 # Copy over the CSV template that will be used as a base CSV. This base CSV has
 # existing values we want for all versions of the tigera-operator.
 # The param '--make-manifests=false' is required for the CSV template to be used.
 cp hack/gen-csv/clusterserviceversion.template ${CSV}
 
+
+cat > ${OUTPUT_DIR}/csv-config.yaml <<EOF
+crd-cr-paths:
+  - ${CSV_DIR}
+operator-path: ${DEPLOY_DIR}/operator.yaml
+role-paths:
+  - ${DEPLOY_DIR}/role.yaml
+EOF
+
 # Finally, generate the ClusterServiceVersion (CSV). The resulting artifacts will be in ${CSV_DIR}.
-hack/bin/operator-sdk generate csv \
+GO111MODULE=on hack/bin/operator-sdk-v0.10.1 olm-catalog gen-csv \
   --operator-name tigera-operator \
   --csv-channel stable \
   --csv-version ${VERSION} \
-  --crd-dir ${CSV_DIR} \
-  --deploy-dir ${DEPLOY_DIR} \
-  --apis-dir pkg/apis/operator/v1/ \
-  --make-manifests=false \
-  --verbose \
-  --interactive=false \
-  --output-dir=${OUTPUT_DIR}
+  --csv-config ${OUTPUT_DIR}/csv-config.yaml \
+  --verbose
 
 OPERATOR_IMAGE=quay.io/tigera/operator:v${VERSION}
 

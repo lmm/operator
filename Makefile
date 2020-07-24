@@ -412,7 +412,7 @@ endif
 ###############################################################################
 # Utilities
 ###############################################################################
-OPERATOR_SDK_VERSION=v0.18.2
+OPERATOR_SDK_VERSION=v0.10.1
 OPERATOR_SDK_BARE=hack/bin/operator-sdk
 OPERATOR_SDK=$(OPERATOR_SDK_BARE)-$(OPERATOR_SDK_VERSION)
 $(OPERATOR_SDK):
@@ -427,8 +427,8 @@ $(OPERATOR_SDK_BARE): $(OPERATOR_SDK)
 
 ## Generating code after API changes.
 gen-files: $(OPERATOR_SDK)
-	$(CONTAINERIZED) $(OPERATOR_SDK) generate crds
 	$(CONTAINERIZED) $(OPERATOR_SDK) generate k8s
+	$(CONTAINERIZED) $(OPERATOR_SDK) generate openapi
 
 OS_VERSIONS?=config/calico_versions.yml
 EE_VERSIONS?=config/enterprise_versions.yml
