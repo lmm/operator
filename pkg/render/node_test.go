@@ -16,6 +16,7 @@ package render_test
 
 import (
 	"fmt"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -627,15 +628,7 @@ var _ = Describe("Node rendering tests", func() {
 		Expect(ds.Spec.Template.Spec.Tolerations).To(ConsistOf(expectedTolerations))
 
 		// Verify readiness and liveness probes.
-		expectedReadiness := &v1.Probe{Handler: v1.Handler{Exec: &v1.ExecAction{Command: []string{"/bin/calico-node", "-felix-ready"}}}}
-		expectedLiveness := &v1.Probe{Handler: v1.Handler{
-			HTTPGet: &v1.HTTPGetAction{
-				Host: "localhost",
-				Path: "/liveness",
-				Port: intstr.FromInt(9099),
-			}}}
-		Expect(ds.Spec.Template.Spec.Containers[0].ReadinessProbe).To(Equal(expectedReadiness))
-		Expect(ds.Spec.Template.Spec.Containers[0].LivenessProbe).To(Equal(expectedLiveness))
+		verifyProbes(ds, false, false)
 	})
 
 	It("should properly render a configuration using the AmazonVPC CNI plugin", func() {
@@ -790,15 +783,7 @@ var _ = Describe("Node rendering tests", func() {
 		Expect(ds.Spec.Template.Spec.Tolerations).To(ConsistOf(expectedTolerations))
 
 		// Verify readiness and liveness probes.
-		expectedReadiness := &v1.Probe{Handler: v1.Handler{Exec: &v1.ExecAction{Command: []string{"/bin/calico-node", "-felix-ready"}}}}
-		expectedLiveness := &v1.Probe{Handler: v1.Handler{
-			HTTPGet: &v1.HTTPGetAction{
-				Host: "localhost",
-				Path: "/liveness",
-				Port: intstr.FromInt(9099),
-			}}}
-		Expect(ds.Spec.Template.Spec.Containers[0].ReadinessProbe).To(Equal(expectedReadiness))
-		Expect(ds.Spec.Template.Spec.Containers[0].LivenessProbe).To(Equal(expectedLiveness))
+		verifyProbes(ds, false, false)
 	})
 
 	It("should render all resources when running on openshift", func() {
@@ -1595,6 +1580,37 @@ var _ = Describe("Node rendering tests", func() {
 		}
 		Expect(passed).To(Equal(true))
 	})
+
+	DescribeTable("test node probes",
+		func(isOpenshift, isEnterprise bool, bgpOption operator.BGPOption) {
+			if isOpenshift {
+				defaultInstance.Spec.KubernetesProvider = operator.ProviderOpenShift
+			}
+
+			if isEnterprise {
+				defaultInstance.Spec.Variant = operator.TigeraSecureEnterprise
+			}
+
+			defaultInstance.Spec.CalicoNetwork.BGP = &bgpOption
+
+			component := render.Node(k8sServiceEp, defaultInstance, nil, typhaNodeTLS, nil, false)
+			resources, _ := component.Objects()
+			dsResource := GetResource(resources, "calico-node", "calico-system", "apps", "v1", "DaemonSet")
+			Expect(dsResource).ToNot(BeNil())
+
+			ds := dsResource.(*apps.DaemonSet)
+			verifyProbes(ds, isOpenshift, isEnterprise)
+		},
+
+		Entry("k8s Calico OS no BGP", false, false, operator.BGPDisabled),
+		Entry("k8s Calico OS w/ BGP", false, false, operator.BGPEnabled),
+		Entry("k8s Enterprise no BGP", false, true, operator.BGPDisabled),
+		Entry("k8s Enterprise w/ BGP", false, true, operator.BGPEnabled),
+		Entry("OCP Calico OS no BGP", true, false, operator.BGPDisabled),
+		Entry("OCP Calico OSS w/ BGP", true, false, operator.BGPEnabled),
+		Entry("OCP Enterprise no BGP", true, true, operator.BGPDisabled),
+		Entry("OCP Enterprise w/ BGP", true, true, operator.BGPEnabled),
+	)
 })
 
 // verifyProbes asserts the expected node liveness and readiness probe.
@@ -1608,16 +1624,32 @@ func verifyProbes(ds *apps.DaemonSet, isOpenshift, isEnterprise bool) {
 			Port: intstr.FromInt(9099),
 		}}}
 
+	if isOpenshift {
+		expectedLiveness.HTTPGet.Port = intstr.FromInt(9199)
+	}
+
+	var found bool
+	var bgp bool
+	for _, env := range ds.Spec.Template.Spec.Containers[0].Env {
+		if env.Name == "CLUSTER_TYPE" {
+			if strings.Contains(env.Value, ",bgp") {
+				bgp = true
+			}
+			found = true
+			break
+		}
+	}
+	Expect(found).To(BeTrue())
+
 	switch {
-	case isOpenshift && isEnterprise:
-		expectedReadiness.Exec.Command = []string{"/bin/calico-node", "-bird-ready", "-bgp-metrics-ready"}
-		expectedLiveness.HTTPGet.Port = intstr.FromInt(9199)
-	case isOpenshift && !isEnterprise:
-		expectedReadiness.Exec.Command = []string{"/bin/calico-node", "-bird-ready"}
-		expectedLiveness.HTTPGet.Port = intstr.FromInt(9199)
-	case !isOpenshift && isEnterprise:
+	case !bgp:
+		expectedReadiness.Exec.Command = []string{"/bin/calico-node", "-felix-ready"}
+	case bgp && !isEnterprise:
+		expectedReadiness.Exec.Command = []string{"/bin/calico-node", "-bird-ready", "-felix-ready"}
+	case bgp && isEnterprise:
 		expectedReadiness.Exec.Command = []string{"/bin/calico-node", "-bird-ready", "-felix-ready", "-bgp-metrics-ready"}
 	}
+
 	Expect(ds.Spec.Template.Spec.Containers[0].ReadinessProbe).To(Equal(expectedReadiness))
 	Expect(ds.Spec.Template.Spec.Containers[0].LivenessProbe).To(Equal(expectedLiveness))
 }
