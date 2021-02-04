@@ -417,7 +417,7 @@ func (r *ReconcileManager) Reconcile(ctx context.Context, request reconcile.Requ
 			r.status.SetDegraded("Failed to read dex tls secret", err.Error())
 			return reconcile.Result{}, err
 		}
-		dexCfg = render.NewDexKeyValidatorConfig(authentication, dexTLSSecret, r.clusterDomain)
+		dexCfg = render.NewDexKeyValidatorConfig(authentication, dexTLSSecret)
 	}
 
 	var elasticLicenseType render.ElasticsearchLicenseType

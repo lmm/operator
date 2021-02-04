@@ -1,8 +1,6 @@
 package render_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -52,7 +50,7 @@ var _ = Describe("dex rendering tests", func() {
 				},
 			}
 
-			tlsSecret = render.CreateDexTLSSecret("tigera-dex.tigera-dex.svc.cluster.local")
+			tlsSecret = render.CreateDexTLSSecret("tigera-dex.tigera-dex.svc")
 			dexSecret = render.CreateDexClientSecret()
 			idpSecret = &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
@@ -78,7 +76,7 @@ var _ = Describe("dex rendering tests", func() {
 
 		It("should render all resources for a OIDC setup", func() {
 
-			dexCfg := render.NewDexConfig(authentication, tlsSecret, dexSecret, idpSecret, "svc.cluster.local")
+			dexCfg := render.NewDexConfig(authentication, tlsSecret, dexSecret, idpSecret)
 
 			component := render.Dex(pullSecrets, false, installation, dexCfg)
 			resources, _ := component.Objects()
@@ -112,14 +110,14 @@ var _ = Describe("dex rendering tests", func() {
 		})
 
 		DescribeTable("should render the cluster name properly in the validator and rp configs", func(clusterDomain string) {
-			validatorConfig := render.NewDexKeyValidatorConfig(authentication, tlsSecret, clusterDomain)
+			validatorConfig := render.NewDexKeyValidatorConfig(authentication, tlsSecret)
 			validatorEnv := validatorConfig.RequiredEnv("")
 
-			expectedUrl := fmt.Sprintf("https://tigera-dex.tigera-dex.svc.%s:5556", clusterDomain)
+			expectedUrl := "https://tigera-dex.tigera-dex.svc:5556"
 			Expect(validatorEnv[2].Value).To(Equal(expectedUrl + "/"))
 			Expect(validatorEnv[3].Value).To(Equal(expectedUrl + "/dex/keys"))
 
-			rpConfig := render.NewDexRelyingPartyConfig(authentication, tlsSecret, dexSecret, clusterDomain)
+			rpConfig := render.NewDexRelyingPartyConfig(authentication, tlsSecret, dexSecret)
 			Expect(rpConfig.UserInfoURI()).To(Equal(expectedUrl + "/dex/userinfo"))
 			Expect(rpConfig.TokenURI()).To(Equal(expectedUrl + "/dex/token"))
 		},
@@ -135,7 +133,7 @@ var _ = Describe("dex rendering tests", func() {
 				Effect:   corev1.TaintEffectNoExecute,
 			}
 
-			dexCfg := render.NewDexConfig(authentication, tlsSecret, dexSecret, idpSecret, "svc.cluster.local")
+			dexCfg := render.NewDexConfig(authentication, tlsSecret, dexSecret, idpSecret)
 			component := render.Dex(pullSecrets, false, &operatorv1.InstallationSpec{
 				ControlPlaneTolerations: []corev1.Toleration{t},
 			}, dexCfg)

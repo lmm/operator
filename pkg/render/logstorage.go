@@ -52,16 +52,16 @@ const (
 	ECKLicenseConfigMapName = "elastic-licensing"
 
 	ElasticsearchNamespace                = "tigera-elasticsearch"
-	ElasticsearchHTTPURL                  = "tigera-secure-es-http.tigera-elasticsearch.svc.%s"
-	ElasticsearchHTTPSEndpoint            = "https://tigera-secure-es-http.tigera-elasticsearch.svc.%s:9200"
+	ElasticsearchHTTPURL                  = "tigera-secure-es-http.tigera-elasticsearch.svc"
+	ElasticsearchHTTPSEndpoint            = "https://tigera-secure-es-http.tigera-elasticsearch.svc:9200"
 	ElasticsearchName                     = "tigera-secure"
 	ElasticsearchConfigMapName            = "tigera-secure-elasticsearch"
 	ElasticsearchServiceName              = "tigera-secure-es-http"
 	ElasticsearchSecureSettingsSecretName = "tigera-elasticsearch-secure-settings"
 	ElasticsearchOperatorUserSecret       = "tigera-ee-operator-elasticsearch-access"
 
-	KibanaHTTPURL          = "tigera-secure-kb-http.tigera-kibana.svc.%s"
-	KibanaHTTPSEndpoint    = "https://tigera-secure-kb-http.tigera-kibana.svc.%s:5601"
+	KibanaHTTPURL          = "tigera-secure-kb-http.tigera-kibana.svc"
+	KibanaHTTPSEndpoint    = "https://tigera-secure-kb-http.tigera-kibana.svc:5601"
 	KibanaName             = "tigera-secure"
 	KibanaNamespace        = "tigera-kibana"
 	KibanaPublicCertSecret = "tigera-secure-kb-http-certs-public"
@@ -155,7 +155,6 @@ func LogStorage(
 	curatorSecrets []*corev1.Secret,
 	esService *corev1.Service,
 	kbService *corev1.Service,
-	clusterDomain string,
 	applyTrial bool,
 	dexCfg DexRelyingPartyConfig,
 	elasticLicenseType ElasticsearchLicenseType,
@@ -177,7 +176,6 @@ func LogStorage(
 		provider:                    provider,
 		esService:                   esService,
 		kbService:                   kbService,
-		clusterDomain:               clusterDomain,
 		applyTrial:                  applyTrial,
 		dexCfg:                      dexCfg,
 		elasticLicenseType:          elasticLicenseType,
@@ -201,7 +199,6 @@ type elasticsearchComponent struct {
 	provider                    operatorv1.Provider
 	esService                   *corev1.Service
 	kbService                   *corev1.Service
-	clusterDomain               string
 	applyTrial                  bool
 	dexCfg                      DexRelyingPartyConfig
 	elasticLicenseType          ElasticsearchLicenseType
@@ -427,7 +424,7 @@ func (es elasticsearchComponent) elasticsearchExternalService() *corev1.Service 
 		},
 		Spec: corev1.ServiceSpec{
 			Type:         corev1.ServiceTypeExternalName,
-			ExternalName: fmt.Sprintf("%s.%s.svc.%s", GuardianServiceName, GuardianNamespace, es.clusterDomain),
+			ExternalName: fmt.Sprintf("%s.%s.svc", GuardianServiceName, GuardianNamespace),
 		},
 	}
 }
@@ -441,7 +438,7 @@ func (es elasticsearchComponent) kibanaExternalService() *corev1.Service {
 		},
 		Spec: corev1.ServiceSpec{
 			Type:         corev1.ServiceTypeExternalName,
-			ExternalName: fmt.Sprintf("%s.%s.svc.%s", GuardianServiceName, GuardianNamespace, es.clusterDomain),
+			ExternalName: fmt.Sprintf("%s.%s.svc", GuardianServiceName, GuardianNamespace),
 		},
 	}
 }
@@ -1261,7 +1258,7 @@ func (es elasticsearchComponent) curatorCronJob() *batchv1beta.CronJob {
 										RunAsNonRoot:             &t,
 										AllowPrivilegeEscalation: &f,
 									},
-								}, DefaultElasticsearchClusterName, ElasticsearchCuratorUserSecret, es.clusterDomain, es.SupportedOSType()),
+								}, DefaultElasticsearchClusterName, ElasticsearchCuratorUserSecret, es.SupportedOSType()),
 							},
 							ImagePullSecrets:   getImagePullSecretReferenceList(es.pullSecrets),
 							RestartPolicy:      corev1.RestartPolicyOnFailure,

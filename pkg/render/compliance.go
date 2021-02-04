@@ -66,7 +66,6 @@ func Compliance(
 	managementCluster *operatorv1.ManagementCluster,
 	managementClusterConnection *operatorv1.ManagementClusterConnection,
 	dexCfg DexKeyValidatorConfig,
-	clusterDomain string,
 ) (Component, error) {
 	complianceServerCertSecrets := []*corev1.Secret{complianceServerCertSecret}
 	complianceServerCertSecrets = append(complianceServerCertSecrets, CopySecrets(ComplianceNamespace, complianceServerCertSecret)...)
@@ -79,7 +78,6 @@ func Compliance(
 		pullSecrets:                 pullSecrets,
 		complianceServerCertSecrets: complianceServerCertSecrets,
 		openshift:                   openshift,
-		clusterDomain:               clusterDomain,
 		managementCluster:           managementCluster,
 		managementClusterConnection: managementClusterConnection,
 		dexCfg:                      dexCfg,
@@ -94,7 +92,6 @@ type complianceComponent struct {
 	pullSecrets                 []*corev1.Secret
 	complianceServerCertSecrets []*corev1.Secret
 	openshift                   bool
-	clusterDomain               string
 	managementCluster           *operatorv1.ManagementCluster
 	managementClusterConnection *operatorv1.ManagementClusterConnection
 	dexCfg                      DexKeyValidatorConfig
@@ -397,7 +394,7 @@ func (c *complianceComponent) complianceControllerDeployment() *appsv1.Deploymen
 					Image:         c.controllerImage,
 					Env:           envVars,
 					LivenessProbe: complianceLivenessProbe,
-				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceControllerUserSecret, c.clusterDomain, c.SupportedOSType()),
+				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceControllerUserSecret, c.SupportedOSType()),
 			},
 		}),
 	}, c.esClusterConfig, c.esSecrets).(*corev1.PodTemplateSpec)
@@ -526,7 +523,7 @@ func (c *complianceComponent) complianceReporterPodTemplate() *corev1.PodTemplat
 							VolumeMounts: []corev1.VolumeMount{
 								{MountPath: "/var/log/calico", Name: "var-log-calico"},
 							},
-						}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceReporterUserSecret, c.clusterDomain, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
+						}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceReporterUserSecret, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
 					),
 				},
 				Volumes: []corev1.Volume{
@@ -710,7 +707,7 @@ func (c *complianceComponent) complianceServerDeployment() *appsv1.Deployment {
 						FailureThreshold:    5,
 					},
 					VolumeMounts: c.complianceVolumeMounts(),
-				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceServerUserSecret, c.clusterDomain, c.SupportedOSType()),
+				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceServerUserSecret, c.SupportedOSType()),
 			},
 			Volumes: c.complianceVolumes(),
 		}),
@@ -913,7 +910,7 @@ func (c *complianceComponent) complianceSnapshotterDeployment() *appsv1.Deployme
 						Image:         c.snapshotterImage,
 						Env:           envVars,
 						LivenessProbe: complianceLivenessProbe,
-					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceSnapshotterUserSecret, c.clusterDomain, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
+					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceSnapshotterUserSecret, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
 				),
 			},
 		}),
@@ -1058,7 +1055,7 @@ func (c *complianceComponent) complianceBenchmarkerDaemonSet() *appsv1.DaemonSet
 						Env:           envVars,
 						VolumeMounts:  volMounts,
 						LivenessProbe: complianceLivenessProbe,
-					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceBenchmarkerUserSecret, c.clusterDomain, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
+					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceBenchmarkerUserSecret, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
 				),
 			},
 			Volumes: vols,

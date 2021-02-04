@@ -20,6 +20,7 @@ import (
 	operatorv1 "github.com/tigera/operator/api/v1"
 	"github.com/tigera/operator/pkg/controller/status"
 	"github.com/tigera/operator/pkg/controller/utils"
+	"github.com/tigera/operator/pkg/dns"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -29,8 +30,7 @@ func NewReconcilerWithShims(
 	schema *runtime.Scheme,
 	status status.StatusManager,
 	provider operatorv1.Provider,
-	esClient utils.ElasticClient,
-	clusterDomain string) (*ReconcileLogStorage, error) {
+	esClient utils.ElasticClient) (*ReconcileLogStorage, error) {
 
-	return newReconciler(cli, schema, status, provider, esClient, clusterDomain)
+	return newReconciler(cli, schema, status, provider, esClient, dns.DefaultClusterDomain)
 }

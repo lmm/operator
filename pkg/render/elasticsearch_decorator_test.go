@@ -16,8 +16,6 @@ package render
 
 import (
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,19 +40,16 @@ var _ = Describe("Elasticsearch decorator tests", func() {
 		}
 	})
 	Context("ElasticsearchContainerDecorate", func() {
-		DescribeTable("should decorate a container with the given cluster DNS used for the ES host name", func(clusterDNS, expectedESHost string) {
-			c := ElasticsearchContainerDecorate(container, "test-cluster", "secret", clusterDNS, OSTypeLinux)
+		It("should decorate a container", func() {
+			c := ElasticsearchContainerDecorate(container, "test-cluster", "secret", OSTypeLinux)
 
 			expectedEnvs := []corev1.EnvVar{
-				{Name: "ELASTIC_HOST", Value: expectedESHost},
+				{Name: "ELASTIC_HOST", Value: "tigera-secure-es-http.tigera-elasticsearch.svc"},
 				{Name: "ELASTIC_PORT", Value: "9200"},
 			}
 			for _, expected := range expectedEnvs {
 				Expect(c.Env).To(ContainElement(expected))
 			}
-		},
-			Entry("default cluster domain", "cluster.local", "tigera-secure-es-http.tigera-elasticsearch.svc.cluster.local"),
-			Entry("custom cluster domain", "acme.internal", "tigera-secure-es-http.tigera-elasticsearch.svc.acme.internal"),
-		)
+		})
 	})
 })
