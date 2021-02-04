@@ -41,6 +41,7 @@ import (
 	operatorv1 "github.com/tigera/operator/api/v1"
 	"github.com/tigera/operator/pkg/common"
 	"github.com/tigera/operator/pkg/components"
+	"github.com/tigera/operator/pkg/dns"
 )
 
 type ElasticsearchLicenseType string
@@ -54,6 +55,7 @@ const (
 	ElasticsearchNamespace                = "tigera-elasticsearch"
 	ElasticsearchHTTPURL                  = "tigera-secure-es-http.tigera-elasticsearch.svc"
 	ElasticsearchHTTPSEndpoint            = "https://tigera-secure-es-http.tigera-elasticsearch.svc:9200"
+	ElasticsearchHTTPSFQDNEndpoint        = "https://tigera-secure-es-http.tigera-elasticsearch.svc.%s:9200"
 	ElasticsearchName                     = "tigera-secure"
 	ElasticsearchConfigMapName            = "tigera-secure-elasticsearch"
 	ElasticsearchServiceName              = "tigera-secure-es-http"
@@ -1258,7 +1260,7 @@ func (es elasticsearchComponent) curatorCronJob() *batchv1beta.CronJob {
 										RunAsNonRoot:             &t,
 										AllowPrivilegeEscalation: &f,
 									},
-								}, DefaultElasticsearchClusterName, ElasticsearchCuratorUserSecret, es.SupportedOSType()),
+								}, DefaultElasticsearchClusterName, ElasticsearchCuratorUserSecret, dns.DefaultClusterDomain, es.SupportedOSType()),
 							},
 							ImagePullSecrets:   getImagePullSecretReferenceList(es.pullSecrets),
 							RestartPolicy:      corev1.RestartPolicyOnFailure,

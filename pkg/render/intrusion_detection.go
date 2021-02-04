@@ -31,6 +31,7 @@ import (
 	v3 "github.com/tigera/api/pkg/apis/projectcalico/v3"
 	operator "github.com/tigera/operator/api/v1"
 	"github.com/tigera/operator/pkg/components"
+	"github.com/tigera/operator/pkg/dns"
 )
 
 const (
@@ -147,7 +148,7 @@ func (c *intrusionDetectionComponent) intrusionDetectionElasticsearchJob() *batc
 			RestartPolicy:    v1.RestartPolicyOnFailure,
 			ImagePullSecrets: getImagePullSecretReferenceList(c.pullSecrets),
 			Containers: []v1.Container{
-				ElasticsearchContainerDecorate(c.intrusionDetectionJobContainer(), c.esClusterConfig.ClusterName(), ElasticsearchIntrusionDetectionJobUserSecret, OSTypeLinux),
+				ElasticsearchContainerDecorate(c.intrusionDetectionJobContainer(), c.esClusterConfig.ClusterName(), ElasticsearchIntrusionDetectionJobUserSecret, dns.DefaultClusterDomain, OSTypeLinux),
 			},
 			Volumes: []corev1.Volume{{
 				Name: "kibana-ca-cert-volume",
@@ -404,7 +405,7 @@ func (c *intrusionDetectionComponent) deploymentPodTemplate() *corev1.PodTemplat
 	}
 
 	container := ElasticsearchContainerDecorateIndexCreator(
-		ElasticsearchContainerDecorate(c.intrusionDetectionControllerContainer(), c.esClusterConfig.ClusterName(), ElasticsearchIntrusionDetectionUserSecret, OSTypeLinux),
+		ElasticsearchContainerDecorate(c.intrusionDetectionControllerContainer(), c.esClusterConfig.ClusterName(), ElasticsearchIntrusionDetectionUserSecret, dns.DefaultClusterDomain, OSTypeLinux),
 		c.esClusterConfig.Replicas(), c.esClusterConfig.Shards())
 
 	if c.esLicenseType == ElasticsearchLicenseTypeBasic {

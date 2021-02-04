@@ -466,7 +466,7 @@ func (c *fluentdComponent) container() corev1.Container {
 		VolumeMounts:    volumeMounts,
 		LivenessProbe:   c.liveness(),
 		ReadinessProbe:  c.readiness(),
-	}, c.esClusterConfig.ClusterName(), ElasticsearchLogCollectorUserSecret, c.osType)
+	}, c.esClusterConfig.ClusterName(), ElasticsearchLogCollectorUserSecret, c.clusterDomain, c.osType)
 }
 
 func (c *fluentdComponent) envvars() []corev1.EnvVar {
@@ -823,13 +823,13 @@ func (c *fluentdComponent) eksLogForwarderDeployment() *appsv1.Deployment {
 						Command:      []string{c.path("/bin/eks-log-forwarder-startup")},
 						Env:          envVars,
 						VolumeMounts: c.eksLogForwarderVolumeMounts(),
-					}, c.esClusterConfig.ClusterName(), ElasticsearchEksLogForwarderUserSecret, c.osType)},
+					}, c.esClusterConfig.ClusterName(), ElasticsearchEksLogForwarderUserSecret, c.clusterDomain, c.osType)},
 					Containers: []corev1.Container{ElasticsearchContainerDecorateENVVars(corev1.Container{
 						Name:         c.eksLogForwarderName(),
 						Image:        c.image,
 						Env:          envVars,
 						VolumeMounts: c.eksLogForwarderVolumeMounts(),
-					}, c.esClusterConfig.ClusterName(), ElasticsearchEksLogForwarderUserSecret, c.osType)},
+					}, c.esClusterConfig.ClusterName(), ElasticsearchEksLogForwarderUserSecret, c.clusterDomain, c.osType)},
 					Volumes: c.eksLogForwarderVolumes(),
 				},
 			},

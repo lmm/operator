@@ -30,6 +30,7 @@ import (
 	v3 "github.com/tigera/api/pkg/apis/projectcalico/v3"
 	operatorv1 "github.com/tigera/operator/api/v1"
 	"github.com/tigera/operator/pkg/components"
+	"github.com/tigera/operator/pkg/dns"
 )
 
 const (
@@ -394,7 +395,7 @@ func (c *complianceComponent) complianceControllerDeployment() *appsv1.Deploymen
 					Image:         c.controllerImage,
 					Env:           envVars,
 					LivenessProbe: complianceLivenessProbe,
-				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceControllerUserSecret, c.SupportedOSType()),
+				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceControllerUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()),
 			},
 		}),
 	}, c.esClusterConfig, c.esSecrets).(*corev1.PodTemplateSpec)
@@ -523,7 +524,7 @@ func (c *complianceComponent) complianceReporterPodTemplate() *corev1.PodTemplat
 							VolumeMounts: []corev1.VolumeMount{
 								{MountPath: "/var/log/calico", Name: "var-log-calico"},
 							},
-						}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceReporterUserSecret, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
+						}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceReporterUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
 					),
 				},
 				Volumes: []corev1.Volume{
@@ -707,7 +708,7 @@ func (c *complianceComponent) complianceServerDeployment() *appsv1.Deployment {
 						FailureThreshold:    5,
 					},
 					VolumeMounts: c.complianceVolumeMounts(),
-				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceServerUserSecret, c.SupportedOSType()),
+				}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceServerUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()),
 			},
 			Volumes: c.complianceVolumes(),
 		}),
@@ -910,7 +911,7 @@ func (c *complianceComponent) complianceSnapshotterDeployment() *appsv1.Deployme
 						Image:         c.snapshotterImage,
 						Env:           envVars,
 						LivenessProbe: complianceLivenessProbe,
-					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceSnapshotterUserSecret, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
+					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceSnapshotterUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
 				),
 			},
 		}),
@@ -1055,7 +1056,7 @@ func (c *complianceComponent) complianceBenchmarkerDaemonSet() *appsv1.DaemonSet
 						Env:           envVars,
 						VolumeMounts:  volMounts,
 						LivenessProbe: complianceLivenessProbe,
-					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceBenchmarkerUserSecret, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
+					}, c.esClusterConfig.ClusterName(), ElasticsearchComplianceBenchmarkerUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()), c.esClusterConfig.Replicas(), c.esClusterConfig.Shards(),
 				),
 			},
 			Volumes: vols,

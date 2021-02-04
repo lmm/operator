@@ -16,6 +16,9 @@ package render
 
 import (
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/tigera/operator/pkg/dns"
+
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
@@ -40,16 +43,20 @@ var _ = Describe("Elasticsearch decorator tests", func() {
 		}
 	})
 	Context("ElasticsearchContainerDecorate", func() {
-		It("should decorate a container", func() {
-			c := ElasticsearchContainerDecorate(container, "test-cluster", "secret", OSTypeLinux)
+		DescribeTable("should decorate a container with the ES host and port", func(clusterDomain, expectedESHost string, os OSType) {
+			c := ElasticsearchContainerDecorate(container, "test-cluster", "secret", clusterDomain, os)
 
 			expectedEnvs := []corev1.EnvVar{
-				{Name: "ELASTIC_HOST", Value: "tigera-secure-es-http.tigera-elasticsearch.svc"},
+				{Name: "ELASTIC_HOST", Value: expectedESHost},
 				{Name: "ELASTIC_PORT", Value: "9200"},
 			}
 			for _, expected := range expectedEnvs {
 				Expect(c.Env).To(ContainElement(expected))
 			}
-		})
+		},
+			Entry("linux", dns.DefaultClusterDomain, "tigera-secure-es-http.tigera-elasticsearch.svc", OSTypeLinux),
+			Entry("linux ignores cluster domain", "does.not.matter", "tigera-secure-es-http.tigera-elasticsearch.svc", OSTypeLinux),
+			Entry("windows", "acme.internal", "tigera-secure-es-http.tigera-elasticsearch.svc.acme.internal", OSTypeWindows),
+		)
 	})
 })

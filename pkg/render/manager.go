@@ -32,6 +32,7 @@ import (
 	operator "github.com/tigera/operator/api/v1"
 	"github.com/tigera/operator/pkg/common"
 	"github.com/tigera/operator/pkg/components"
+	"github.com/tigera/operator/pkg/dns"
 )
 
 const (
@@ -245,8 +246,8 @@ func (c *managerComponent) managerDeployment() *appsv1.Deployment {
 			Tolerations:        c.managerTolerations(),
 			ImagePullSecrets:   getImagePullSecretReferenceList(c.pullSecrets),
 			Containers: []corev1.Container{
-				ElasticsearchContainerDecorate(c.managerContainer(), c.esClusterConfig.ClusterName(), ElasticsearchManagerUserSecret, c.SupportedOSType()),
-				ElasticsearchContainerDecorate(c.managerEsProxyContainer(), c.esClusterConfig.ClusterName(), ElasticsearchManagerUserSecret, c.SupportedOSType()),
+				ElasticsearchContainerDecorate(c.managerContainer(), c.esClusterConfig.ClusterName(), ElasticsearchManagerUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()),
+				ElasticsearchContainerDecorate(c.managerEsProxyContainer(), c.esClusterConfig.ClusterName(), ElasticsearchManagerUserSecret, dns.DefaultClusterDomain, c.SupportedOSType()),
 				c.managerProxyContainer(),
 			},
 			Volumes: c.managerVolumes(),
