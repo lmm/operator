@@ -2,11 +2,9 @@ package render_test
 
 import (
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	operatorv1 "github.com/tigera/operator/api/v1"
-	"github.com/tigera/operator/pkg/dns"
 	"github.com/tigera/operator/pkg/render"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -109,7 +107,7 @@ var _ = Describe("dex rendering tests", func() {
 			}
 		})
 
-		DescribeTable("should render the cluster name properly in the validator and rp configs", func(clusterDomain string) {
+		It("should render the cluster name properly in the validator and rp configs", func() {
 			validatorConfig := render.NewDexKeyValidatorConfig(authentication, tlsSecret)
 			validatorEnv := validatorConfig.RequiredEnv("")
 
@@ -120,10 +118,7 @@ var _ = Describe("dex rendering tests", func() {
 			rpConfig := render.NewDexRelyingPartyConfig(authentication, tlsSecret, dexSecret)
 			Expect(rpConfig.UserInfoURI()).To(Equal(expectedUrl + "/dex/userinfo"))
 			Expect(rpConfig.TokenURI()).To(Equal(expectedUrl + "/dex/token"))
-		},
-			Entry("default cluster domain", dns.DefaultClusterDomain),
-			Entry("custom cluster domain", "custom.internal"),
-		)
+		})
 
 		It("should apply tolerations", func() {
 			t := corev1.Toleration{

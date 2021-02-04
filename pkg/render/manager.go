@@ -40,7 +40,6 @@ const (
 	managerTargetPort                = 9443
 	ManagerServiceName               = "tigera-manager"
 	ManagerNamespace                 = "tigera-manager"
-	ManagerServiceDNS                = "tigera-manager.tigera-manager.svc.%s"
 	ManagerServiceIP                 = "localhost"
 	ManagerServiceAccount            = "tigera-manager"
 	ManagerClusterRole               = "tigera-manager-role"
