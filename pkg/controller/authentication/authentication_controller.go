@@ -25,6 +25,7 @@ import (
 	"github.com/tigera/operator/pkg/controller/status"
 	"github.com/tigera/operator/pkg/controller/utils"
 	"github.com/tigera/operator/pkg/controller/utils/imageset"
+	"github.com/tigera/operator/pkg/dns"
 	"github.com/tigera/operator/pkg/render"
 
 	corev1 "k8s.io/api/core/v1"
@@ -46,7 +47,9 @@ const (
 	ControllerName = "authentication-controller"
 
 	// Common name to add to the Dex TLS secret.
-	dexCN = "tigera-dex.tigera-dex.svc.%s"
+	dexCN          = "tigera-dex.tigera-dex.svc"
+	dexServiceName = "tigera-dex"
+	dexNamespace   = "tigera-dex"
 )
 
 // Add creates a new authentication Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -207,7 +210,8 @@ func (r *ReconcileAuthentication) Reconcile(ctx context.Context, request reconci
 	if err := r.client.Get(ctx, types.NamespacedName{Name: render.DexTLSSecretName, Namespace: render.OperatorNamespace()}, tlsSecret); err != nil {
 		if errors.IsNotFound(err) {
 			// We need to render a new one.
-			tlsSecret = render.CreateDexTLSSecret(dexCN)
+			dnsNames := dns.GetServiceDNSNames(dexServiceName, dexNamespace, r.clusterDomain)
+			tlsSecret = render.CreateDexTLSSecret(dexCN, dnsNames...)
 		} else {
 			log.Error(err, "Failed to read tigera-operator/tigera-dex-tls secret")
 			r.status.SetDegraded("Failed to read tigera-operator/tigera-dex-tls secret", err.Error())

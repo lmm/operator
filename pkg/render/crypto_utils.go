@@ -57,8 +57,8 @@ func voltronTunnelSecret() *corev1.Secret {
 	}
 }
 
-func CreateDexTLSSecret(dexCommonName string) *corev1.Secret {
-	key, cert := createSelfSignedSecret(dexCommonName, []string{dexCommonName})
+func CreateDexTLSSecret(dexCommonName string, altNames ...string) *corev1.Secret {
+	key, cert := createSelfSignedSecret(dexCommonName, altNames)
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
